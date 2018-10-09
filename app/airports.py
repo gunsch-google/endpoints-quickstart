@@ -14,16 +14,18 @@
 
 # Airport data provided by David Megginson (http://ourairports.com/data/).
 
+import collections
 import csv
-import io
 
 class Airports(object):
   """An interface for reading data about airports."""
 
   def __init__(self):
-    with open('third_party/airports.csv', 'r') as f:
-      self.airport_file = io.StringIO(f.read())
-      self.airport_reader = csv.DictReader(self.airport_file)
+    with open('third_party/airports.csv', 'rb') as f:
+      self.airport_reader = csv.DictReader(f)
+      self.airports = collections.defaultdict(collections.OrderedDict)
+      for row in self.airport_reader:
+        self.airports[row['iata_code']] = row
 
   def get_airport_by_iata(self, iata_code):
     """Given an IATA code, look up that airport's name.
@@ -35,8 +37,6 @@ class Airports(object):
       string: The airport name, if found.
       None: The airport was not found.
     """
-    self.airport_file.seek(0)
-    for row in self.airport_reader:
-      if row['iata_code'] == iata_code:
-        return row['name']
+    if iata_code in self.airports:
+      return self.airports[iata_code]['name']
     return None
